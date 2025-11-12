@@ -1,48 +1,55 @@
 """
-Database Schemas
+Database Schemas for RightTick
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model below represents a MongoDB collection.
+Collection name is the lowercase of the class name.
 """
-
+from typing import List, Optional, Literal
 from pydantic import BaseModel, Field
-from typing import Optional
 
-# Example schemas (replace with your own):
+# Core entities
+class Student(BaseModel):
+    name: str
+    student_id: str = Field(..., description="Institute roll / registration number")
+    email: Optional[str] = None
+    avatar_url: Optional[str] = None
+    integrity_score: float = Field(100, ge=0, le=100)
 
-class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+class Test(BaseModel):
+    title: str
+    code: str = Field(..., description="Join code shared with students")
+    duration_minutes: int = Field(..., ge=5, le=300)
+    subject: Optional[str] = None
+    status: Literal["upcoming", "ongoing", "completed"] = "upcoming"
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+class Question(BaseModel):
+    test_code: str
+    qtype: Literal["mcq", "coding", "theory"]
+    title: str
+    prompt: str
+    options: Optional[List[str]] = None
+    answer: Optional[str] = None
+    difficulty: Optional[Literal["easy", "medium", "hard"]] = None
+    topic: Optional[str] = None
 
-# Add your own schemas here:
-# --------------------------------------------------
+class Submission(BaseModel):
+    test_code: str
+    student_id: str
+    answers: dict = Field(default_factory=dict)
+    code: Optional[str] = None
+    score: Optional[float] = None
+    coding_accuracy: Optional[float] = None
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class Alert(BaseModel):
+    test_code: str
+    student_id: str
+    kind: Literal["eye_movement", "tab_change", "keyboard_toggle", "face_missing", "other"]
+    severity: Literal["low", "medium", "high"] = "low"
+    message: str
+    snapshot_url: Optional[str] = None
+
+# Optional analytics shape (stored if needed)
+class IntegrityMetric(BaseModel):
+    test_code: str
+    student_id: str
+    score: float = Field(..., ge=0, le=100)
